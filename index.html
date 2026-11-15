@@ -6,7 +6,7 @@
 .blood-drop{position:absolute;z-index:12;left:50%;top:-8%;width:31px;height:41px;pointer-events:none;opacity:0;filter:drop-shadow(0 3px 7px #b80e3b99);transform:translate(-50%,-50%)}
 .blood-drop::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 34% 31%,#ffabb2 0%,#fa5368 20%,#df153e 53%,#8e092a 100%);clip-path:path("M 15.5 0 C 12 10 1 19 1 28 C 1 46 30 46 30 28 C 30 19 19 10 15.5 0 Z");}
 .blood-drop.falling{animation:drop-to-print 2.35s cubic-bezier(.32,.12,.55,1) forwards}
-@keyframes drop-to-print{0%{opacity:0;transform:translate(-50%,-50%) scale(.85)}10%{opacity:1}72%{opacity:1;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1.15)}84%{opacity:1;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.9)}100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.18)}}
+@keyframes drop-to-print{0%{left:50%;top:-8%;opacity:0;transform:translate(-50%,-50%) scale(.8)}12%{opacity:1}72%{left:var(--end-x);top:var(--end-y);opacity:1;transform:translate(-50%,-50%) scale(1.1)}86%{left:var(--end-x);top:var(--end-y);opacity:1;transform:translate(-50%,-50%) scale(.8)}100%{left:var(--end-x);top:var(--end-y);opacity:0;transform:translate(-50%,-50%) scale(.15)}}
 .print.new-print{animation:print-reveal .8s ease-out both!important;filter:drop-shadow(0 0 11px currentColor)!important}
 @keyframes print-reveal{0%{opacity:0;scale:.15}60%{opacity:1;scale:1.4}100%{opacity:1;scale:1}}
  .names-section{margin-top:32px;padding:25px;border:1px solid #77d8f83b;background:linear-gradient(145deg,#123755b8,#09243de8);border-radius:24px}.names-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}.names-head h2{font-size:23px;margin:10px 0}.names-head p{font-size:13px;color:#b8d4e3}.names-total{border:1px solid #5acbf588;border-radius:40px;padding:9px 15px;color:#b8edff}.names-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-top:20px;max-height:340px;overflow:auto}.name-item{padding:13px 15px;background:#0b2945;border:1px solid #427b9a70;border-radius:12px;display:flex;gap:10px;align-items:center;font-size:14px;overflow-wrap:anywhere}.name-item b{color:#5ed6f7;font-size:12px}.names-empty{color:#a9cddd;font-size:14px}.display-mode .names-section{display:none}@media(max-width:600px){.names-section{padding:18px}.names-grid{grid-template-columns:repeat(2,minmax(0,1fr))}} .case-title{font-size:clamp(34px,6vw,64px);font-weight:900;color:#f4d79d;margin:12px 0 8px;text-shadow:0 0 24px #e2bc7133;line-height:1.3}.game-next{display:flex;flex-direction:column;align-items:center;gap:12px;padding:24px 14px;margin:20px 0;background:linear-gradient(135deg,#14577a,#0b3458);border:1px solid #6bd7f288;border-radius:18px;box-shadow:0 0 25px #24b4e822}.game-next-icon{font-size:42px}.game-next strong{font-size:clamp(19px,3vw,26px);color:#f4d79d}.game-next span{font-size:15px;line-height:1.8;color:#e1f6ff}
@@ -63,15 +63,18 @@ const $=x=>document.getElementById(x),key='case14_pro_prints_v1';let entries=[];
 function render(highlight=false){
  const n=entries.length;$('count').textContent=n.toLocaleString('ar-SA');
  const el=$('prints');el.innerHTML='';
- // البصمات المسجلة فقط، بدون عشرات البصمات الوهمية التي تشوه شكل الحلقة.
  const count=Math.min(n,200);
- const first=Math.max(0,n-200);
- for(let i=0;i<count;i++){
+ // ظلال زرقاء خفيفة لكل المواقع، حتى قبل وصول أول زائر.
+ for(let i=0;i<200;i++){
   const {x,y}=printPosition(i),div=document.createElement('div');
-  div.className='print'+(highlight&&i===count-1?' new-print':'');
-  div.style.cssText=`left:${x}%;top:${y}%;width:2.85%;height:3.7%;opacity:.96`;
-  const ink=(first+i)%2===0?'#39c9f7':'#f15b72';
-  div.style.color=ink;div.innerHTML=fp(ink);el.appendChild(div);
+  const active=i<count;
+  div.className='print'+(active&&highlight&&i===(n-1)%200?' new-print':'');
+  div.style.left=x+'%';div.style.top=y+'%';
+  div.style.width='2.85%';div.style.height='3.7%';
+  div.style.opacity=active?'.96':'.22';
+  div.style.animation=active&&highlight&&i===(n-1)%200?'': 'none';
+  const ink=active?(i%2===0?'#39c9f7':'#f15b72'):'#4a9dc7';
+  div.innerHTML=fp(ink);el.appendChild(div);
  }
 }
 
@@ -81,8 +84,8 @@ function registerPrint(){
  if(busy)return;busy=true;
  const nextIndex=entries.length%200,{x,y}=printPosition(nextIndex),orb=document.querySelector('.orb');
  const drop=document.createElement('div');drop.className='blood-drop';
- drop.style.setProperty('--dx',((x-50)/100*orb.clientWidth)+'px');
- drop.style.setProperty('--dy',((y-50)/100*orb.clientHeight)+'px');
+ drop.style.setProperty('--end-x',x+'%');
+ drop.style.setProperty('--end-y',y+'%');
  orb.appendChild(drop);
  requestAnimationFrame(()=>drop.classList.add('falling'));
  let finished=false;
