@@ -70,10 +70,10 @@ function render(highlight=false){
   const active=i<count;
   div.className='print'+(active&&highlight&&i===(n-1)%200?' new-print':'');
   div.style.left=x+'%';div.style.top=y+'%';
-  div.style.width='3.35%';div.style.height='4.2%';
-  div.style.opacity=active?'.96':'.38';
+  div.style.width='2.85%';div.style.height='3.7%';
+  div.style.opacity=active?'.96':'.22';
   div.style.animation=active&&highlight&&i===(n-1)%200?'': 'none';
-  const ink=active?(i%2===0?'#39c9f7':'#f15b72'):'#4a9dc7';
+  const ink=active?'#39c9f7':'#4a9dc7';
   div.innerHTML=fp(ink);el.appendChild(div);
  }
 }
@@ -84,20 +84,10 @@ function registerPrint(){
  if(busy)return;busy=true;
  const nextIndex=entries.length%200,{x,y}=printPosition(nextIndex),orb=document.querySelector('.orb');
  const drop=document.createElement('div');drop.className='blood-drop';
- // حركة بإحداثيات البكسل بدلاً من تحريك top بالنسب المئوية؛
- // تمنع اختلاف اتجاه القطرة على Safari في الآيباد.
- drop.style.left='0';drop.style.top='0';drop.style.opacity='1';
- drop.style.transform='translate(-50%,-50%)';
+ drop.style.setProperty('--end-x',x+'%');
+ drop.style.setProperty('--end-y',y+'%');
  orb.appendChild(drop);
- const w=orb.clientWidth,h=orb.clientHeight;
- const sx=w*.5,sy=-48,ex=w*x/100,ey=h*y/100;
- const frames=[
-  {transform:`translate(${sx}px,${sy}px) translate(-50%,-50%) scale(.85)`,opacity:0,offset:0},
-  {transform:`translate(${sx}px,${sy+20}px) translate(-50%,-50%) scale(1)`,opacity:1,offset:.12},
-  {transform:`translate(${ex}px,${ey}px) translate(-50%,-50%) scale(1.05)`,opacity:1,offset:.78},
-  {transform:`translate(${ex}px,${ey}px) translate(-50%,-50%) scale(.15)`,opacity:0,offset:1}
- ];
- const motion=drop.animate(frames,{duration:2500,easing:'ease-in',fill:'forwards'});
+ requestAnimationFrame(()=>drop.classList.add('falling'));
  let finished=false;
  function finish(){if(finished)return;finished=true;
   entries.push({date:new Date().toISOString()});try{localStorage.setItem(key,JSON.stringify(entries))}catch(e){}
@@ -105,7 +95,7 @@ function registerPrint(){
   $('thanks').textContent='تم تسجيل بصمتك في دائرة الوعي بالقضية رقم ١٤.';
   setTimeout(resetVisitor,4200);
  }
- motion.onfinish=finish;setTimeout(finish,2800);
+ drop.addEventListener('animationend',finish,{once:true});setTimeout(finish,2600);
 }
 $('again').onclick=resetVisitor;
 $('mode').onclick=()=>{document.body.classList.toggle('display-mode');$('mode').textContent=document.body.classList.contains('display-mode')?'العودة إلى المشاركة':'وضع شاشة العرض'};
